@@ -16,3 +16,5 @@
 # ---- Gameplay routines -------------------------------------------------
 07:E30D  LinkTakeDamage         # A = attacker's damage class; skips if $0518 (invincibility timer) is set
 07:E32F  LinkTakeDamage_Apply   # hook point: A = damage about to be subtracted from life ($0774)
+07:E72F  EnemyTakeSwordDamage   # hook point: X = enemy slot, Y = attack level ($0777); subtracts $E66C,Y from enemy HP ($C2,X)
+07:DDEC  GiveEnemyExperience    # Y = experience class ($0414,X); adds ($DDDC,Y << 8 | $DDC0,Y) to pending EXP ($0755/$0756)
