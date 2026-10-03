@@ -1,0 +1,18 @@
+# Names for routines in the original code: BANK:ADDR  Name  [flags]
+#
+# Names become the C function names in generated/. Flags:
+#   noreturn   a JSR to this routine never comes back to the next
+#              instruction (e.g. it reads inline data after the JSR)
+#
+07:FF70  Reset
+07:C07B  NMI
+07:C000  Main
+07:FF9D  MMC1_WriteControl
+07:FFB1  MMC1_WriteChrBank0
+07:FFCC  MMC1_SwitchPrgBank
+07:D385  JumpEngine  noreturn   # A = index into the table of addresses that follows the JSR
+07:D382  JumpEngine_Mode  noreturn   # same, using $073D as the index
+
+# ---- Gameplay routines -------------------------------------------------
+07:E30D  LinkTakeDamage         # A = attacker's damage class; skips if $0518 (invincibility timer) is set
+07:E32F  LinkTakeDamage_Apply   # hook point: A = damage about to be subtracted from life ($0774)

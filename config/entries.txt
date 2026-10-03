@@ -1,0 +1,2 @@
+# Extra code entry points for the recompiler: BANK:ADDR (hex), one per line.
+# Addresses found automatically while playing are appended to discovered.txt.

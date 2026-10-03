@@ -1,0 +1,11 @@
+# Never commit the ROM or anything derived from it
+*.nes
+generated/
+saves/
+build/
+.DS_Store
+__pycache__/
+
+# IDEs
+.vscode/
+.idea/

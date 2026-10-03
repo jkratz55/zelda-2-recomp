@@ -1,0 +1,12 @@
+# Title screen -> register name "AAA" -> start the game in the North Palace.
+# Format: first_frame last_frame BUTTONS   (buttons: A B SELECT START UP DOWN LEFT RIGHT, join with +)
+120 125 START
+420 425 START
+500 505 A
+520 525 A
+540 545 A
+600 605 SELECT
+620 625 SELECT
+640 645 SELECT
+700 705 START
+800 805 START
