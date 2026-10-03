@@ -26,16 +26,29 @@ cmake --build build -j8
 ./build/zelda2
 ```
 
-| Control | Keyboard | Gamepad |
-|---|---|---|
-| D-pad | Arrow keys | D-pad / left stick |
-| A (jump) | X | East button (Xbox B) |
-| B (attack) | Z | South button (Xbox A) |
-| Start | Enter | Start |
-| Select | Right Shift | Back |
-| Save / load state | F5 / F9 | |
-| Fast forward (hold) | Tab | |
-| Pause, fullscreen, reset, quit | P, F11, F12, Esc | |
+| NES button | Keyboard | Xbox controller | PlayStation controller |
+|---|---|---|---|
+| D-pad | Arrow keys | D-pad or left stick | D-pad or left stick |
+| A (jump) | X | B or Y | Circle or Triangle |
+| B (attack) | Z | A or X | Cross or Square |
+| Start | Enter | Menu | Options |
+| Select | Right Shift | View | Create / Share |
+
+| Emulator function | Key |
+|---|---|
+| Save / load state | F5 / F9 |
+| Fast forward (hold) | Tab |
+| Pause, fullscreen, reset, quit | P, F11, F12, Esc |
+
+Controllers work over USB or Bluetooth and can be plugged in or unplugged at
+any time; the terminal prints `Controller connected: …` when one is
+detected. The keyboard always works too, alongside any controllers. The
+default mapping copies the original NES pad, where B (attack) sits to the
+left of A (jump). To change it, edit `pad_map` at the top of
+`runtime/input.c`. Other brands (Switch Pro, 8BitDo, …) work the same way.
+For anything SDL doesn't recognise, put a
+[`gamecontrollerdb.txt`](https://github.com/mdqinc/SDL_GameControllerDB) in
+the project folder.
 
 Battery saves (your three save files) go to `saves/zelda2.sav`.
 
@@ -156,6 +169,8 @@ Common next steps:
 | `tools/opcodes.py` | 6502 instruction table |
 | `tools/verify.sh` | recompiled-vs-interpreter equivalence test |
 | `tools/random_input.py` | random-play input generator |
+| `runtime/input.c` | keyboard + controller handling (button mapping lives here) |
+| `tests/test_input.c` | controller test using virtual controllers (`cmake --build build --target test_input && ./build/test_input`) |
 | `runtime/` | NES hardware runtime + SDL3 frontend |
 | `mods/mods.c` | your changes |
 | `config/labels.txt` | names (and flags) for routines |

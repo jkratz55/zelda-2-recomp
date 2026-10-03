@@ -16,6 +16,8 @@
  * Keys: arrows = D-pad, X = A, Z = B, Enter = Start, Right Shift = Select,
  *       F5 = save state, F9 = load state, F11 = fullscreen, P = pause,
  *       Tab (hold) = fast forward, F12 = reset, Esc = quit.
+ * Xbox / PlayStation / other controllers work too, plugged in or unplugged
+ * at any time - see input.c for the button mapping.
  */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -24,6 +26,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "input.h"
 #include "nes.h"
 
 bool png_write(const char *path, const uint32_t *argb, int w, int h);
@@ -155,39 +158,6 @@ static int run_headless(long frames, Shot *shots, int nshots, const char *hash_l
 
 /* ----------------------------------------------------------- Windowed */
 
-static uint8_t read_controls(SDL_Gamepad *pad) {
-    const bool *k = SDL_GetKeyboardState(NULL);
-    uint8_t b = 0;
-    if (k[SDL_SCANCODE_X]) b |= BTN_A;
-    if (k[SDL_SCANCODE_Z]) b |= BTN_B;
-    if (k[SDL_SCANCODE_RSHIFT] || k[SDL_SCANCODE_BACKSPACE]) b |= BTN_SELECT;
-    if (k[SDL_SCANCODE_RETURN]) b |= BTN_START;
-    if (k[SDL_SCANCODE_UP]) b |= BTN_UP;
-    if (k[SDL_SCANCODE_DOWN]) b |= BTN_DOWN;
-    if (k[SDL_SCANCODE_LEFT]) b |= BTN_LEFT;
-    if (k[SDL_SCANCODE_RIGHT]) b |= BTN_RIGHT;
-    if (pad) {
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_EAST)) b |= BTN_A;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_SOUTH)) b |= BTN_B;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_BACK)) b |= BTN_SELECT;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_START)) b |= BTN_START;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_DPAD_UP)) b |= BTN_UP;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_DPAD_DOWN)) b |= BTN_DOWN;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_DPAD_LEFT)) b |= BTN_LEFT;
-        if (SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) b |= BTN_RIGHT;
-        int lx = SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_LEFTX);
-        int ly = SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_LEFTY);
-        if (lx < -16000) b |= BTN_LEFT;
-        if (lx > 16000) b |= BTN_RIGHT;
-        if (ly < -16000) b |= BTN_UP;
-        if (ly > 16000) b |= BTN_DOWN;
-    }
-    /* the game can misbehave with opposing directions held */
-    if ((b & (BTN_LEFT | BTN_RIGHT)) == (BTN_LEFT | BTN_RIGHT)) b &= (uint8_t)~(BTN_LEFT | BTN_RIGHT);
-    if ((b & (BTN_UP | BTN_DOWN)) == (BTN_UP | BTN_DOWN)) b &= (uint8_t)~(BTN_UP | BTN_DOWN);
-    return b;
-}
-
 static int run_window(int scale) {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD)) {
         fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
@@ -208,7 +178,7 @@ static int run_window(int scale) {
     if (audio) SDL_ResumeAudioStreamDevice(audio);
     else fprintf(stderr, "warning: no audio (%s)\n", SDL_GetError());
 
-    SDL_Gamepad *pad = NULL;
+    input_init();
     bool running = true, paused = false, fullscreen = false;
     const uint64_t frame_ns = 16639267; /* 1 / 60.0988 Hz */
     uint64_t next_frame = SDL_GetTicksNS(), last_sram_check = 0, title_time = SDL_GetTicksNS();
@@ -218,8 +188,8 @@ static int run_window(int scale) {
     while (running) {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
+            input_handle_event(&e);
             if (e.type == SDL_EVENT_QUIT) running = false;
-            else if (e.type == SDL_EVENT_GAMEPAD_ADDED && !pad) pad = SDL_OpenGamepad(e.gdevice.which);
             else if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat) {
                 switch (e.key.scancode) {
                 case SDL_SCANCODE_ESCAPE: running = false; break;
@@ -259,7 +229,7 @@ static int run_window(int scale) {
         }
 
         for (int i = 0; i < frames_to_run; i++) {
-            pad_state[0] = read_controls(pad);
+            pad_state[0] = input_read();
             if (mods_enabled) mods_frame();
             nes_run_frame();
             frames_this_second++;
@@ -297,7 +267,7 @@ static int run_window(int scale) {
     }
 
     if (cart.sram_dirty) save_sram();
-    if (pad) SDL_CloseGamepad(pad);
+    input_shutdown();
     if (audio) SDL_DestroyAudioStream(audio);
     SDL_DestroyTexture(tex);
     SDL_DestroyRenderer(ren);

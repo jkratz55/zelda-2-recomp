@@ -45,7 +45,7 @@ add_custom_command(
 
 # ---- Game executable ----------------------------------------------------
 add_executable(zelda2
-  runtime/main.c runtime/cpu.c runtime/bus.c runtime/ppu.c runtime/apu.c runtime/png.c
+  runtime/main.c runtime/input.c runtime/cpu.c runtime/bus.c runtime/ppu.c runtime/apu.c runtime/png.c
   mods/mods.c
   ${GEN_SRCS})
 target_include_directories(zelda2 PRIVATE runtime "${GEN_DIR}")
@@ -76,7 +76,7 @@ add_custom_command(
   COMMENT "Recompiling 6502 code to C (strict verification mode)"
   VERBATIM)
 add_executable(zelda2_verify EXCLUDE_FROM_ALL
-  runtime/main.c runtime/cpu.c runtime/bus.c runtime/ppu.c runtime/apu.c runtime/png.c
+  runtime/main.c runtime/input.c runtime/cpu.c runtime/bus.c runtime/ppu.c runtime/apu.c runtime/png.c
   mods/mods.c
   ${GEN_STRICT_SRCS})
 target_include_directories(zelda2_verify PRIVATE runtime "${GEN_STRICT_DIR}")
@@ -87,3 +87,10 @@ target_compile_definitions(zelda2_verify PRIVATE
 if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
   set_source_files_properties(${GEN_STRICT_SRCS} PROPERTIES COMPILE_OPTIONS "-Wno-unused-label;-Wno-unused-variable")
 endif()
+
+# ---- Tests -----------------------------------------------------------------
+# Controller handling, tested with SDL virtual controllers:
+#   cmake --build build --target test_input && ./build/test_input
+add_executable(test_input EXCLUDE_FROM_ALL tests/test_input.c runtime/input.c)
+target_include_directories(test_input PRIVATE runtime)
+target_link_libraries(test_input PRIVATE SDL3::SDL3)
